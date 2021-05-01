@@ -81,6 +81,19 @@ code {
 .chartfilter label:hover {
   background: #DDD;
 }
+
 .Plotly{
   padding: 10px;
+}
+
+.customCardgreen {
+  background: green !important;
+}
+
+.customCardyellow {
+  background: yellow !important;
+}
+
+.customCardred {
+  background: red !important;
 }
