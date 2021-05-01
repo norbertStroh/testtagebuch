@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { Navbar } from "react-bootstrap";
 import Logo from '../images/BKA_Logo_srgb.svg';
 /**
  * Darstellung einer Überschrift 
@@ -8,10 +9,17 @@ class Header extends Component {
 
     render() {
         return (
-            <div>
-                <img src={Logo} alt="Logo" href="#" />
-                <h1>Persönliches Covid Tagebuch</h1>
-            </div>);
+            <Navbar bg="light">
+                <Navbar.Brand href="./">
+                    <img
+                        src={Logo}
+                        className="d-inline-block align-bottom"
+                        alt="React Bootstrap logo"
+                    />
+            Persönliches Covid Tagebuch
+            </Navbar.Brand>
+            </Navbar>
+        );
     }
 }
 
