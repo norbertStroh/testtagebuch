@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.css';
 import './App.css';
 import { Component } from 'react';
-import { Link, Route, Switch, withRouter } from 'react-router-dom';
+import { Link, NavLink, Route, Switch, withRouter } from 'react-router-dom';
 import Headline from './components/Headline'; // Headline.js
 import Header from './components/Header';
 import 'flatpickr/dist/themes/light.css';
@@ -12,7 +12,6 @@ import Handschuhe from './images/handschuh.svg';
 import FlatPickr from 'react-flatpickr';
 import BarChart from './components/BarChart';
 import { Card } from "react-bootstrap";
-import Moment from 'react-moment';
 import moment from 'moment-timezone';
 
 
@@ -46,49 +45,12 @@ class App extends Component {
     this.deleteContact = this.deleteContact.bind(this);
     this.handleAddTest = this.handleAddTest.bind(this);
     this.deleteTest = this.deleteTest.bind(this);
-
   }
-  //https://www.sozialministerium.at/Informationen-zum-Coronavirus/Coronavirus---Haeufig-gestellte-Fragen/FAQ-Testarten-Testnachweise.html#:~:text=Bei%20Testabnahme%20mittels%20molekularbiologischen%20Test,eine%20G%C3%BCltigkeit%20von%2048%20Stunden.
-  // PCR results are 72hours valid
-  // antigen results are 48 hours valid 
-  //
-  //definition of colors
-  //green:  nagativ test result and more then 24hours valid
-  //yellow: nagativ test result and less then 24hours valid
-  //red:    positiv test result and less more then 14 days ago
-
   //load data from local storage
   componentDidMount() {
     const { testItems, contactItems, items } = this.state;
-
-
     if (testItems.length === 0) {
       const newTestItems = localStorage.getItem('testItems') !== null ? JSON.parse(localStorage.getItem('testItems')) : [];
-
-      newTestItems.map((testItem, index) => {
-
-        let color = "orange";
-        const parsedTestDate = Date.parse(testItem.date);
-        const parsedTestDateNow = Date.parse(new Date());
-        const testType = testItem.testType;
-        const result = testItem.testResult;
-        //green
-        if (result === "true" && (parsedTestDate + 14 * 1000 * 60 * 60 * 24) > (parsedTestDateNow)) {
-          color = "red";
-        } else if (result === "false" && testType === "antigen" && (parsedTestDate + 2 * 1000 * 60 * 60 * 24) < parsedTestDateNow) {
-          color = "red";
-        } else if (result === "false" && testType === "pcr" && (parsedTestDate + 3 * 1000 * 60 * 60 * 24) < parsedTestDateNow) {
-          color = "red";
-        } else if (result === "false" && testType === "antigen" && (parsedTestDate + 1 * 1000 * 60 * 60 * 24) > parsedTestDateNow) {
-          color = "green";
-        } else if (result === "false" && testType === "pcr" && (parsedTestDate + 2 * 1000 * 60 * 60 * 24) > parsedTestDateNow) {
-          color = "green";
-        } else {
-          color = "yellow";
-        }
-        testItem.color = color;
-      });
-
       this.setState({ testItems: newTestItems });
     }
     if (items.length === 0) {
@@ -113,7 +75,7 @@ class App extends Component {
 
     const newItems = [...items, item];
     localStorage.setItem('items', JSON.stringify(newItems));
-    this.setState({ items: newItems, cntArticle: 1, article: "ffp1", date: new Date() });
+    this.setState({ items: newItems, cntArticle: 1, article: "ffp1" });
   }
   //add contact to the array 
   handleAddContact() {
@@ -126,44 +88,43 @@ class App extends Component {
 
     const newItems = [...contactItems, contactItem];
     localStorage.setItem('contactItems', JSON.stringify(newItems));
-    this.setState({ contactItems: newItems, firstName: "", sirName: "", date: new Date() });
+    this.setState({ contactItems: newItems, firstName: "", sirName: "" });
   }
   //add test result to the array 
+  //https://www.sozialministerium.at/Informationen-zum-Coronavirus/Coronavirus---Haeufig-gestellte-Fragen/FAQ-Testarten-Testnachweise.html#:~:text=Bei%20Testabnahme%20mittels%20molekularbiologischen%20Test,eine%20G%C3%BCltigkeit%20von%2048%20Stunden.
+  // PCR results are 72hours valid
+  // antigen results are 48 hours valid 
+  //
+  //definition of colors
+  //green:  nagativ test result and more then 24hours valid
+  //yellow: nagativ test result and less then 24hours valid
+  //red:    positiv test result and less more then 14 days ago
+
   handleAddTest() {
     const { testType, testResult, date, testItems } = this.state;
     const testItem = {
       testType: testType,
       testResult: testResult,
       date: date,
-      color: "",
-      dateRed:"",
-      dateGreen:"",
-      dateYellow:"",
+      dateRed: null,
+      dateGreen: null,
+      dateYellow: null,
     };
-    let color = "orange";
-    const parsedTestDate =   moment(date, "hh:mm DD-MM-YYYY");;
-   let redTestDate  =parsedTestDate ;
-   let yellowTestDate =parsedTestDate;
-   let greenTestDate =parsedTestDate;
-   
+    const parsedTestDate = moment(date, "hh:mm DD-MM-YYYY");;
     //green
-    if (testResult === "true" ) {
-      redTestDate = moment(parsedTestDate).add(14, 'days');
-      color = "red";
-    }  else if (testResult === "false" && testType === "antigen") {
-      greenTestDate = moment(parsedTestDate).add(1, 'days');
-      yellowTestDate =moment(parsedTestDate);
-      color = "green";
+    if (testResult === "true") {
+      testItem.dateRed = moment(parsedTestDate).add(14, 'days');
+    } else if (testResult === "false" && testType === "antigen") {
+      testItem.dateGreen = moment(parsedTestDate).add(1, 'days');
+      testItem.dateYellow = moment(parsedTestDate).add(2, 'days');
     } else if (testResult === "false" && testType === "pcr") {
-      greenTestDate = moment(parsedTestDate).add(2, 'days');
-      yellowTestDate =moment(parsedTestDate);
-      color = "green";
-    } 
-    testItem.color = color;
+      testItem.dateGreen = moment(parsedTestDate).add(2, 'days');
+      testItem.dateYellow = moment(parsedTestDate).add(3, 'days');
+    }
 
     const newItems = [...testItems, testItem];
     localStorage.setItem('testItems', JSON.stringify(newItems));
-    this.setState({ testItems: newItems, testType: "", testResult: "", redTestDate: redTestDate,greenTestDate:greenTestDate, yellowTestDate:yellowTestDate});
+    this.setState({ testItems: newItems, testType: "", testResult: "" });
   }
 
   //delete contact from array 
@@ -223,7 +184,17 @@ class App extends Component {
       console.log(`File name: "${fileObj.name}". ` +
         `Length: ${fileContents.length} bytes.`);
       const daten = JSON.parse(fileContents);
-      this.setState(daten.data);
+
+      const itemsimp = daten.data.items;
+      const contactItemsimp = daten.data.contactItems;
+      const testItemsimp = daten.data.testItems;
+
+      localStorage.setItem('items', JSON.stringify(itemsimp));
+      localStorage.setItem('contactItems', JSON.stringify(contactItemsimp));
+      localStorage.setItem('testItems', JSON.stringify(testItemsimp));
+      this.setState({ items: itemsimp });
+      this.setState({ contactItems: contactItemsimp });
+      this.setState({ testItems: testItemsimp });
       console.log(daten);
     }
 
@@ -231,6 +202,10 @@ class App extends Component {
     reader.onload = fileloaded;
     reader.readAsText(fileObj);
   }
+
+
+
+
 
 
   //this method is used for preparing the data to print the chart
@@ -267,24 +242,52 @@ class App extends Component {
 
   render() {
     const { date, items, cntArticle, article, daysBackForChart, firstName, sirName, contactItems, testType, testResult, testItems } = this.state;
-
+    const actdate = moment(date, "hh:mm DD.MM.YYYY");
     return (
       <div className="container">
         <Header />
-        <Link to="/">Hauptseite</Link>
-        <Link to="/test">Test</Link>
-        <Link to="/contact">Kontakt</Link>
-        <Link to="/article">Material verbraucht</Link>
-        <Link to="/info">Infoseite</Link>
-        <Link to="/settings">Export/Import</Link>
+        <div className="navbar">
+          <NavLink to="/" activeStyle={{ fontWeight: "bold", color: '#ED2939' }}>Home</NavLink>
+          <NavLink to="/test" activeStyle={{ fontWeight: "bold", color: '#ED2939' }} >Test</NavLink>
+          <NavLink to="/contact" activeStyle={{ fontWeight: "bold", color: '#ED2939' }} >Kontakt</NavLink>
+          <NavLink to="/article" activeStyle={{ fontWeight: "bold", color: '#ED2939' }} >Material verbraucht</NavLink>
+          <NavLink to="/info" activeStyle={{ fontWeight: "bold", color: '#ED2939' }} >Infoseite</NavLink>
+          <NavLink to="/settings" activeStyle={{ fontWeight: "bold", color: '#ED2939' }} >Export/Import</NavLink>
+        </div>
         <Switch>
           <Route exact path="/">
-            Hauptseite
-              <Headline titel="Hauptseite" beschreibung="Einstiegsseite" />
+            <Headline titel="Hauptseite" beschreibung="Wählen sie die gewünschte Option aus" />
+            <div className="home">
+              <NavLink to="/test">
+                <Card>
+                  <Card.Header>Testungen</Card.Header>
+                </Card>
+              </NavLink>
+              <NavLink to="/contact">
+                <Card>
+                  <Card.Header>Kontakt Tracking</Card.Header>
+                </Card>
+              </NavLink>
+              <NavLink to="/article">
+                <Card>
+                  <Card.Header>Verbrauchs Material-traking</Card.Header>
+                </Card>
+              </NavLink>
+              <NavLink to="/info">
+                <Card>
+                  <Card.Header>Allgemeine Covid Informationen</Card.Header>
+                </Card>
+              </NavLink>
+              <NavLink to="/settings">
+                <Card>
+                  <Card.Header>Import/Export</Card.Header>
+                </Card>
+              </NavLink>
+            </div>
           </Route>
           <Route exact path="/test">
             <header>
-              <Headline titel="Test" beschreibung="Test" />
+              <Headline titel="Test Tracking" beschreibung="Bitte Wählen sie das Datum aus und geben Sie den typ des Covid-test sowie das Resultat bekannt." />
             </header>
             <main>
               <div className="row">
@@ -305,15 +308,14 @@ class App extends Component {
                           </div>
                         </div>
                       </div>
-                        <div class="form-row">
-                          <label for="txtDatum">Datum der Testung</label>
-                        </div>
-                        <div class="form-row">
+                      <div class="form-row">
+                        <label for="txtDatum">Datum der Testung</label>
+                      </div>
+                      <div class="form-row">
                         <FlatPickr value={date} id="txtDatum" options={{
                           enableTime: true,
-                          dateFormat: "H:i d.m.Y",
                           time_24hr: true,
-                        }} onChange={date => this.setState({ date: moment(date[0], "hh:mm DD.MM.YYYY") })} />
+                        }} onChange={date => this.setState({ date: date[0] })} />
                       </div>
                       <div class="form-row">
                         <div class="col">
@@ -338,9 +340,9 @@ class App extends Component {
                 <div class="col-md-6">
                   <div className="row">
                     {testItems.map((testItem, index) =>
-                      <Card id={"list-item-contact" + (index + 1)} className={"customCard" + testItem.color}>
-                        <Card.Header>{testItem.testResult ==="false" ?"Negativer":"Positiver"}{"  "}{testItem.testType.toUpperCase()}{" Test"}</Card.Header>
-                        <Card.Body>{"Gültis bis:"}<Moment locale="de" format="hh:mm DD.MM.YYYY">{testItem.date}</Moment></Card.Body>
+                      <Card id={"list-item-contact" + (index + 1)} className={"customCard" + (testItem.dateRed !== null ? (moment(actdate).isBefore(testItem.dateRed) ? "red" : "red1") : testItem.dateGreen !== null ? (moment(actdate).isBefore(testItem.dateGreen) ? "green" : testItem.dateYellow !== null ? (moment(actdate).isBefore(testItem.dateYellow) ? "yellow" : "yellow1") : "sadas") : "nothing set")}>
+                        <Card.Header>{testItem.testResult === "false" ? "Negativer" : "Positiver"}{"  "}{testItem.testType.toUpperCase()}{" Test"}</Card.Header>
+                        <Card.Body>{"Gültis bis: " + (testItem.dateRed !== null ? moment(testItem.dateRed).format("hh:mm DD.MM.YYYY") : moment(testItem.dateYellow).format("hh:mm DD.MM.YYYY"))}</Card.Body>
                         <button value={index} onClick={e => { this.deleteTest(e) }} className="btn btn-light">Löschen</button>
                       </Card>
                     )}
@@ -351,7 +353,7 @@ class App extends Component {
           </Route>
           <Route exact path="/contact">
             <header>
-              <Headline titel="Kontakt" beschreibung="Kontakt" />
+              <Headline titel="Kontakt Tracking" beschreibung="Bitte Wählen sie das Datum aus und geben die den Vollständingen Namen ein." />
             </header>
             <main>
               <form>
@@ -393,7 +395,7 @@ class App extends Component {
                       {contactItems && contactItems.map((contactItem, index) =>
                         <Card id={"list-item-contact" + (index + 1)}>
                           <Card.Header>{contactItem.sirName}{"  "}{contactItem.firstName}</Card.Header>
-                          <Card.Body><Moment locale="de" format="hh:mm DD.MM.YYYY">{contactItem.date}</Moment></Card.Body>
+                          <Card.Body>{"Datum: " + moment(contactItem.date).format("DD.MM.YYYY")}</Card.Body>
                           <button value={index}
                             onClick={e => { this.deleteContact(e) }} className="btn btn-light">Löschen</button>
                         </Card>
@@ -432,34 +434,34 @@ class App extends Component {
                     </div>
                   </div>
                   <form>
-                  <div class="form-row">
-                    <div class="col">
-                      <div className="row">
-                        <label for="txtDatum">Datum der Verwendung</label>
+                    <div class="form-row">
+                      <div class="col">
+                        <div className="row">
+                          <label for="txtDatum">Datum der Verwendung</label>
+                        </div>
+                        <div className="row" id="txtDatum">
+                          <FlatPickr value={date}
+                            onChange={date => this.setState({ date: date[0] })} />
+                        </div>
                       </div>
-                      <div className="row" id="txtDatum">
-                        <FlatPickr value={date}
-                          onChange={date => this.setState({ date: moment(date[0], "hh:mm DD.MM.YYYY") })} />
+                      <div class="col">
+                        <div className="row">
+                          <label for="cntArticle">Anzahl/Stk</label>
+                        </div>
+                        <div className="row">
+                          <input id="cntArticle"
+                            type="number"
+                            min="1"
+                            name="cntArticle"
+                            value={cntArticle}
+                            onChange={this.handleInput}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div class="col">
                     <div className="row">
-                        <label for="cntArticle">Anzahl/Stk</label>
-                      </div>
-                      <div className="row">
-                        <input id="cntArticle"
-                          type="number"
-                          min="1"
-                          name="cntArticle"
-                          value={cntArticle}
-                          onChange={this.handleInput}
-                        />
-                      </div>
+                      <button onClick={e => { this.handleAddArticle(e); this.perpareChart() }} className="btn btn-primary">Speichern</button>
                     </div>
-                  </div>
-                  <div className="row">
-                    <button onClick={e => { this.handleAddArticle(e); this.perpareChart() }} className="btn btn-primary">Speichern</button>
-                  </div>
                   </form>
                 </div>
                 <div class="col-md-6">
@@ -489,27 +491,111 @@ class App extends Component {
             </main>
           </Route>
           <Route exact path="/info">
-            Infoseite
+            <header>
               <Headline titel="Infoseite" beschreibung="Infoseite" />
+            </header>
+            <main>
+              <div className="row">
+                <div class="col-md-3">
+                  <div className="row">
+                    <img id="r" name="article" src={Ffp1} alt="ffp1" class="info" />
+                  </div>
+                </div>
+                <div class="col-md-9">
+                  <div className="row">
+                    <p>
+                      Entsprechend der DGUV Regel 112-190 dürfen FFP1-Masken bei Schadstoffkonzentrationen bis zum 4-fachen des Arbeitsplatzgrenzwertes (AGW) eingesetzt werden.
+                      Sie schützen gegen ungiftige Partikel auf Wasser- und Ölbasis, nicht jedoch gegen krebserzeugende und radioaktive Stoffe, luftgetragene biologische Arbeitsstoffe der Risikogruppen 2 und 3 + Enzyme.
+                      Die Gesamtleckage (Undichtigkeit) beträgt maximal 22%, mindestens 80% der Schadstoffe werden aus der Luft gefiltert.
+                      Typische Anwendungen für eine FFP1-Maske finden sich beispielsweise in der Lebensmittelindustrie.
+                  </p>
+                  </div>
+                </div>
+              </div>
+              <div className="row">
+                <div class="col-md-3">
+                  <div className="row">
+                    <img id="r" name="Ffp2" src={Ffp2} alt="ffp2" class="info" />
+                  </div>
+                </div>
+                <div class="col-md-9">
+                  <div className="row">
+                    <p>
+                    Entsprechend der DGUV Regel 112-190 dürfen FFP2-Masken bei Schadstoffkonzentrationen bis zum 10-fachen des Arbeitsplatzgrenzwertes (AGW) eingesetzt werden. 
+                    Sie schützen gegen gesundheitsschädliche Partikel auf Wasser- und Ölbasis, nicht jedoch gegen krebserzeugende Stoffe, radioaktive Partikel, luftgetragene biologische Arbeitsstoffe der Risikogruppe 3 und Enzyme.
+                    Die Gesamtleckage (Undichtigkeit) beträgt maximal 8%, mindestens 94% der Schadstoffe werden aus der Luft gefiltert.
+                    Typische Anwendungen für eine FFP2-Maske sind beispielsweise der Umgang mit Weichholz, Glasfasern, Metall, Kunststoffen (nicht PVC) und Ölnebel.
+                    Das Robert Koch-Institut (RKI) empfiehlt zur Behandlung und Pflege von Patientinnen und Patienten mit einer Infektion durch das Coronavirus SARS-CoV-2 FFP2-Masken sowie FFP3-Masken.
+                  </p>
+                  </div>
+                </div>
+              </div>
+              <div className="row">
+                <div class="col-md-3">
+                  <div className="row">
+                    <img id="r" name="Handschuhe" src={Handschuhe} alt="Handschuhe" class="info" />
+                  </div>
+                </div>
+                <div class="col-md-9">
+                  <div className="row">
+                    <p>
+                    Handschuhe schützen allgemein vor Verschmutzungen, Verletzungen, aggressiven Stoffen (zum Beispiel Reinigungsmittel) und auch dem Verbreiten von Krankheitserregern. Verschiedene 
+                    Materialien und Ausführungen von Handschuhen – beispielsweise Latex, Nitril, Vinyl, steril oder nicht steril – sollen diesen unterschiedlichen Ansprüchen gerecht werden. Die BGW, Berufsgenossenschaft
+                     für Gesundheitsdienst und Wohlfahrtspflege, stellt in einer Bildergalerie verschiedene Handschuhtypen vor und geht auch auf Vor- und Nachteile ein. Latexhandschuhe (Naturkautschuk) zeichnen sich beispielsweise
+                      durch eine relativ hohe mechanische Strapazierbarkeit und Chemikalienbeständigkeit aus, weisen aber ein allergisierendes Potenzial auf und 
+                    sind empfindlich gegen Fette und Öle (Stichwort: Handpflegeprodukte). Latexfreie Nitrilhandschuhe gelten hingegen als gut verträglich, sie sind jedoch weniger dehnbar und sollten deswegen bei der Handschuhgröße eine halbe Nummer größer gewählt werden.
+                  </p>
+                  </div>
+                </div>
+              </div>
+              <div className="row">
+                <div class="col-md-3">
+                  <div className="row">
+                    <img id="r" name="desinfektionsmittel" src={Desinfektionsmittel} alt="desinfektionsmittel" class="info" />
+                  </div>
+                </div>
+                <div class="col-md-9">
+                  <div className="row">
+                    <p>
+                    Wir sind ständig umgeben von „Mikroben“ – Mikroorganismen wie Bakterien, Viren oder Pilze sind überall in der Umwelt. Der überwiegende Teil ist für uns jedoch harmlos oder sogar nützlich! Nur ein
+                     kleiner Prozentsatz ist für uns Menschen schädlich: Man nennt diese Mikroben daher auch oft Krankheitserreger. Mit Desinfektionsmitteln 
+                    kann man die Zahl der Mikroben in der Umgebung oder auf Händen und Haut eindämmen. Dazu muss man sich überlegen, wann dies überhaupt notwendig ist, welche Desinfektionsmittel man verwenden sollte und wie man sie richtig einsetzt.
+                  </p>
+                  </div>
+                </div>
+              </div>
+
+
+            </main>
           </Route>
           <Route exact path="/settings">
-            Einstellungen
-              <div>
-              <h2>
-                Export
-                </h2>
-              <a className="btn btn-secondary"
-                href={`data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify({ appVersion: 1, data: this.state }))}`}
-                download="settings.json">Herunterladen</a>
-              <h2>
-                Import
-                </h2>
-              <input type="file" className="hidden"
-                multiple={false}
-                accept=".json,application/json"
-                onChange={evt => this.handleImportData(evt)}
-              />
-            </div>
+            <Headline titel="Import/Expoer" beschreibung="Dies dient dazu die Date auf ein anderes Gerät zu Übertragen" />
+            <form>
+              <div class="form-row">
+                <div class="col">
+                  <div className="row">
+                    <label for="export">Export</label>
+                  </div>
+                  <div className="row">
+                    <a id="export" className="btn btn-secondary"
+                      href={`data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify({ appVersion: 1, data: this.state }))}`}
+                      download="settings.json">Herunterladen</a>
+                  </div>
+                </div>
+                <div class="col">
+                  <div className="row">
+                    <label for="import">Import</label>
+                  </div>
+                  <div className="row">
+                    <input id="import" type="file" className="hidden"
+                      multiple={false}
+                      accept=".json,application/json"
+                      onChange={evt => this.handleImportData(evt)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </form>
           </Route>
           <Route path="*">
             Seite nicht gefunden...

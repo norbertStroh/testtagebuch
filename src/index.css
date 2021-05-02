@@ -97,3 +97,18 @@ code {
 .customCardred {
   background: red !important;
 }
+
+.navbar a {
+  color: #000;
+  text-decoration: none;
+}
+.home a {
+  color: #000;
+  text-decoration: none;
+}
+
+.info  { 
+  height: 200px;
+  width: 200px;
+ 
+}
